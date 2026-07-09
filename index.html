@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Canteen Stock — Al Othaim School Canteens</title>
+<style>
+:root{
+  --navy:#14213D; --navy2:#1F3864; --blue:#2E75B6; --ink:#0F2440;
+  --teal:#1FA98A; --amber:#E0A32E; --red:#C0392B;
+  --paper:#FBF7EF; --slate:#EEF3F9; --line:#DCE4EE; --mut:#6B7A8F;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--navy);color:var(--ink);min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* ===== header ===== */
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;color:#fff;flex-wrap:wrap;gap:10px}
+.brand .k{font-size:10px;letter-spacing:.22em;color:#9BB8DC;font-weight:700}
+.brand .t{font-size:18px;font-weight:800}
+.brand .t .ar{font-weight:600;color:#C9D6E8;font-size:14px;margin-inline-start:8px}
+.tabs{display:flex;gap:8px;background:rgba(255,255,255,.08);border-radius:12px;padding:4px}
+.tab{border:none;background:transparent;color:#C9D6E8;font-weight:800;font-size:14px;padding:8px 16px;border-radius:9px}
+.tab.on{background:#fff;color:var(--navy)}
+
+/* ===== shells ===== */
+.shell{border-radius:16px 16px 0 0;min-height:calc(100vh - 64px);padding:18px 16px 120px}
+#schoolShell{background:var(--paper)}
+#scShell{background:var(--slate);display:none}
+.wrap{max-width:980px;margin:0 auto}
+
+/* ===== school mode ===== */
+.card{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.lbl{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.lbl .ar{font-weight:600;text-transform:none;letter-spacing:0}
+.row2{display:flex;gap:12px;flex-wrap:wrap}
+.row2>div{flex:1;min-width:220px}
+.inp{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;margin-top:4px;background:#fff}
+.schoolpick{position:relative}
+.schoollist{position:absolute;z-index:30;left:0;right:0;top:100%;background:#fff;border:1.5px solid var(--line);border-radius:10px;max-height:240px;overflow:auto;box-shadow:0 12px 30px rgba(20,33,61,.12);display:none}
+.schoollist div{padding:9px 12px;font-size:14px;cursor:pointer}
+.schoollist div:hover{background:var(--slate)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--navy2);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:6px 14px;margin-top:6px}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 10px}
+.search{flex:1;min-width:200px;border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;font-size:14px;background:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-size:12px;padding:7px 12px;border-radius:999px}
+.chip.on{background:var(--navy2);border-color:var(--navy2);color:#fff}
+
+/* count sheet */
+.sheet{display:flex;flex-direction:column;gap:8px}
+.sku{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}
+.sku.touched{border-color:var(--amber)}
+.sku.balanced{border-color:var(--teal)}
+.sku.variance{border-color:var(--red)}
+.skuhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.sku .en{font-weight:800;font-size:14px}
+.sku .ar{direction:rtl;font-size:13px;color:var(--mut)}
+.sku .meta{font-size:11px;color:var(--mut);font-weight:700}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.cell .cl{font-size:10px;font-weight:800;color:var(--mut);letter-spacing:.04em;text-transform:uppercase;text-align:center}
+.cell input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:9px 4px;font-size:17px;font-weight:900;text-align:center;color:var(--ink);background:#fff}
+.cell input:disabled{background:var(--slate);color:var(--mut)}
+.proof{margin-top:7px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:6px;min-height:18px}
+.proof.ok{color:var(--teal)}
+.proof.bad{color:var(--red)}
+.proof.idle{color:var(--mut);font-weight:600}
+
+/* footer bar */
+.fbar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#fff;padding:12px 16px;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 -10px 30px rgba(0,0,0,.25);z-index:40}
+.fstat{text-align:center;min-width:86px}
+.fstat .n{font-size:20px;font-weight:900}
+.fstat .l{font-size:10px;color:#9BB8DC;font-weight:700;letter-spacing:.06em}
+.submit{background:var(--teal);border:none;color:#fff;font-weight:900;font-size:16px;padding:13px 30px;border-radius:12px}
+.submit:disabled{background:#41546E;color:#8FA6C4;cursor:not-allowed}
+
+/* confirmation */
+.confirm{display:none;text-align:center;padding:60px 20px}
+.confirm .big{width:92px;height:92px;border-radius:50%;background:var(--teal);color:#fff;font-size:44px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.confirm h2{color:var(--ink);font-size:24px;margin-bottom:6px}
+.confirm p{color:var(--mut);font-size:14px;margin-bottom:4px}
+.confirm .ref{font-weight:900;color:var(--navy2);font-size:15px;margin:10px 0 22px}
+.ghost{border:2px solid var(--navy2);background:transparent;color:var(--navy2);font-weight:800;border-radius:11px;padding:11px 22px}
+
+/* ===== supply chain mode ===== */
+.gate{max-width:420px;margin:60px auto;text-align:center}
+.gate .card{padding:26px}
+.scbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{background:var(--navy2);color:#fff;border:none;font-weight:800;font-size:14px;padding:11px 18px;border-radius:10px}
+.btn.teal{background:var(--teal)}
+.btn.ghost2{background:#fff;color:var(--navy2);border:2px solid var(--navy2)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .n{font-size:24px;font-weight:900;color:var(--navy2)}
+.kpi .l{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
+table.sc{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1.5px solid var(--line)}
+table.sc th{background:var(--navy2);color:#fff;font-size:12px;letter-spacing:.04em;text-align:left;padding:10px 12px}
+table.sc td{padding:10px 12px;font-size:13px;border-top:1px solid var(--line)}
+table.sc tr.det td{background:var(--slate);font-size:12px}
+.vbadge{display:inline-block;background:#FBEEF0;color:var(--red);font-weight:800;font-size:11px;border-radius:999px;padding:3px 10px}
+.okbadge{display:inline-block;background:#EEF6EF;color:var(--teal);font-weight:800;font-size:11px;border-radius:999px;padding:3px 10px}
+.note{background:#FFF6E0;border:1.5px solid #EAD08C;border-radius:10px;padding:10px 14px;font-size:13px;color:#7A5A10;margin-bottom:12px}
+.empty{padding:50px 20px;text-align:center;color:var(--mut)}
+
+@media (max-width:640px){
+  .grid5{grid-template-columns:repeat(5,1fr);gap:5px}
+  .cell input{font-size:15px;padding:8px 2px}
+  .fstat{min-width:70px}
+  table.sc th:nth-child(5),table.sc td:nth-child(5){display:none}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="k">AL OTHAIM · SCHOOL CANTEENS · INTERIM REPLENISHMENT</div>
+    <div class="t">Daily Canteen Stock <span class="ar">· المخزون اليومي للمقصف</span></div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tabSchool" role="tab">School Entry · إدخال المدرسة</button>
+    <button class="tab" id="tabSC" role="tab">Supply Chain · سلسلة الإمداد</button>
+  </div>
+</header>
+
+<!-- ================= SCHOOL MODE ================= -->
+<div class="shell" id="schoolShell">
+  <div class="wrap" id="entryWrap">
+    <div class="card">
+      <div class="row2">
+        <div class="schoolpick">
+          <div class="lbl">School · <span class="ar">المدرسة</span></div>
+          <input class="inp" id="schoolInput" placeholder="Type school name or code… ابحث عن المدرسة" autocomplete="off">
+          <div class="schoollist" id="schoolList"></div>
+          <div id="schoolPill"></div>
+        </div>
+        <div style="max-width:220px">
+          <div class="lbl">Date · <span class="ar">التاريخ</span></div>
+          <input class="inp" type="date" id="dateInput">
+        </div>
+        <div style="max-width:260px">
+          <div class="lbl">Vendor name (optional) · <span class="ar">اسم البائع</span></div>
+          <input class="inp" id="vendorInput" placeholder="Vendor / البائع">
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input class="search" id="skuSearch" placeholder="Search item / ابحث عن صنف…">
+      <div class="chips" id="catChips"></div>
+    </div>
+    <p style="font-size:12px;color:var(--mut);margin:0 0 10px 2px">
+      Enter counts only for items your canteen carries — untouched items are not submitted.
+      Closing should equal Opening + Received − Sold − Damaged; differences are flagged as variance.
+    </p>
+
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+  <div class="confirm" id="confirmBox">
+    <div class="big">✓</div>
+    <h2>Stock submitted · تم إرسال المخزون</h2>
+    <p id="confMeta"></p>
+    <div class="ref" id="confRef"></div>
+    <button class="ghost" id="newEntry">Enter another day / school</button>
+  </div>
+
+  <div class="fbar" id="fbar">
+    <div class="fstat"><div class="n" id="fItems">0</div><div class="l">ITEMS</div></div>
+    <div class="fstat"><div class="n" id="fClosing">0</div><div class="l">CLOSING UNITS</div></div>
+    <div class="fstat"><div class="n" id="fSold">0</div><div class="l">SOLD UNITS</div></div>
+    <div class="fstat"><div class="n" id="fValue">0</div><div class="l">SALES SAR</div></div>
+    <div class="fstat"><div class="n" id="fVar" style="color:#F0A9A0">0</div><div class="l">VARIANCES</div></div>
+    <button class="submit" id="submitBtn" disabled>Submit day · إرسال</button>
+  </div>
+</div>
+
+<!-- ================= SUPPLY CHAIN MODE ================= -->
+<div class="shell" id="scShell">
+  <div class="wrap">
+    <div class="gate" id="scGate">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:8px">Supply Chain access · دخول سلسلة الإمداد</div>
+        <input class="inp" type="password" id="scPass" placeholder="Passcode">
+        <p style="font-size:12px;color:var(--mut);margin-top:8px">Demo passcode: <b>SC2026</b></p>
+        <button class="btn" style="margin-top:12px;width:100%" id="scEnter">Enter</button>
+      </div>
+    </div>
+
+    <div id="scMain" style="display:none">
+      <div class="note" id="storageNote" style="display:none"></div>
+      <div class="scbar">
+        <div>
+          <div class="lbl">Date · التاريخ</div>
+          <input class="inp" type="date" id="scDate" style="max-width:200px">
+        </div>
+        <button class="btn ghost2" id="scRefresh">Refresh</button>
+        <div style="flex:1"></div>
+        <button class="btn teal" id="scExport">⬇ Download CSV — selected date</button>
+        <button class="btn" id="scExportAll">⬇ All dates</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="n" id="kSchools">0</div><div class="l">Schools reported</div></div>
+        <div class="kpi"><div class="n" id="kSold">0</div><div class="l">Units sold</div></div>
+        <div class="kpi"><div class="n" id="kClosing">0</div><div class="l">Units on hand</div></div>
+        <div class="kpi"><div class="n" id="kValue">0</div><div class="l">Sales value (SAR)</div></div>
+        <div class="kpi"><div class="n" id="kVar" style="color:var(--red)">0</div><div class="l">Variance lines</div></div>
+      </div>
+      <table class="sc" id="scTable">
+        <thead><tr>
+          <th>School</th><th>Time</th><th>Items</th><th>Sold</th><th>Closing</th><th>SAR</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="scBody"></tbody>
+      </table>
+      <div class="empty" id="scEmpty" style="display:none">No submissions for this date yet.</div>
+    </div>
+  </div>
+</div>
+<script>
+const SKUS = [{"id": "051422", "en": "GANDOUR TAMRIA DATE CUPCAK.25G", "ar": "كب كيك تمرية غندور تمر&دخن 25ج", "p": 1, "c": "Cake"}, {"id": "001696", "en": "ALRABIE JUICE ORANGE 185ML", "ar": "عصير الربيع برتقال 185مل", "p": 2, "c": "Juice"}, {"id": "001697", "en": "ALRABIE JUICE APPLE 185ML", "ar": "عصير الربيع تفاح 185مل", "p": 2, "c": "Juice"}, {"id": "011092", "en": "ALRABIE JUICE PINEAPPLE 185ML", "ar": "عصير الربيع اناناس 185مل", "p": 2, "c": "Juice"}, {"id": "011093", "en": "ALRABIE JUICE GRAPE 185ML", "ar": "عصير الربيع عنب 185مل", "p": 2, "c": "Juice"}, {"id": "049858", "en": "ALRABIE MANGO DRINK 185ML", "ar": "عصير الربيع مانجا 185مل", "p": 2, "c": "Juice"}, {"id": "051661", "en": "ALRABIE BAERRY MIX JUICEE 185ML", "ar": "عصير الربيع توت مشكل 185مل", "p": 2, "c": "Juice"}, {"id": "053862", "en": "ALrai JUICE ORANGE & GRAPE 200ML", "ar": "عصير الري برتقال&عنب 200مل", "p": 2, "c": "Juice"}, {"id": "053865", "en": "ALrai JUICE APPLE & GRAPE 200ML", "ar": "عصير الري تفاح&عنب 200مل", "p": 2, "c": "Juice"}, {"id": "053867", "en": "ALrai JUICE MANGO & GRAPE 200ML", "ar": "عصير الري مانجو&عنب 200مل", "p": 2, "c": "Juice"}, {"id": "053870", "en": "ALrai JUICE MIX & GRAPE 200ML", "ar": "عصير الري فواكه مشكلة&عنب200مل", "p": 2, "c": "Juice"}, {"id": "010621", "en": "ALMARAI ORANGE 140ML", "ar": "عصير المراعي برتقال 140 مل", "p": 2, "c": "Juice"}, {"id": "010622", "en": "ALMARAI APPLE 140ML", "ar": "عصير المراعي تفاح 140 مل", "p": 2, "c": "Juice"}, {"id": "010623", "en": "ALMARAI MANGO&GRAPE 140ML", "ar": "نكتار المراعي مانجو وعنب 140 مل", "p": 2, "c": "Juice"}, {"id": "011946", "en": "ALMARAI MIX FRUIT JUICE 140ML", "ar": "نكتار المراعي فواكه مشكلة 140 مل", "p": 2, "c": "Juice"}, {"id": "005590", "en": "YAMAMA CUP CAKE STRAWBERRY 30G", "ar": "كب كيك يمامة غندور فراولة 30ج", "p": 1, "c": "Cake"}, {"id": "013339", "en": "DEEMAH KRAKY ZAATAR CRCKRS 42G", "ar": "بسكويت ديمة كراكي بالزعتر 42ج", "p": 1, "c": "Biscuit"}, {"id": "011495", "en": "DEEMAH CUP CAKE STRAWBERRY 27G", "ar": "كب كيك ديمة بحشوة فراولة 27ج", "p": 1, "c": "Cake"}, {"id": "50374", "en": "ALRABIE STRAWBERRY MILK 125ML", "ar": "حليب الربيع فراولة ط/ج 125مل", "p": 2, "c": "Milk"}, {"id": "50375", "en": "ALRABIE MILK 125ML", "ar": "حليب الربيع سادة ط/ج 125مل", "p": 2, "c": "Milk"}, {"id": "000410", "en": "GANDOUR CAKE STRAWBERRY 21G", "ar": "كيك يمامة غندور فراولة 21ج", "p": 1, "c": "Cake"}, {"id": "010255", "en": "NADEC STRAWBERRY MILK 125ML", "ar": "حليب نادك كابتن فراولة 125مل", "p": 2, "c": "Milk"}, {"id": "010256", "en": "NADEC MILK LONG LIFE FF 125ML", "ar": "حليب نادك سادة كد ط/ج 125مل", "p": 2, "c": "Milk"}, {"id": "010253", "en": "NADEC VANILA MLK CAPTAIN 125ML", "ar": "حليب نادك كابتن فانيلا 125مل", "p": 2, "c": "Milk"}, {"id": "009407", "en": "DEEMAH SUKARY DATE BARS 21G", "ar": "بسكويت ديمه بالتمر سكري 21ج", "p": 1, "c": "Biscuit"}, {"id": "010254", "en": "NADEC BANANA MLK CAPTAIN 125ML", "ar": "حليب نادك كابتن موز 125مل", "p": 2, "c": "Milk"}, {"id": "062087", "en": "TUC PLAIN CRACKERS ORIGINAL 23G", "ar": "بسكويت توك اصلي مالح 23ج", "p": 1, "c": "Biscuit"}, {"id": "036381", "en": "ALBATAL POPCORN BUTTER 14G", "ar": "فشار البطل زبدة 14 جرام", "p": 1, "c": "Popcorn"}, {"id": "064862", "en": "KRAS WAFER NOUGAT 12x38G", "ar": "ويفر كوكي مينو مربع نوجا 38ج", "p": 2, "c": "Biscuit"}, {"id": "064465", "en": "TEA FOR CANTEENS", "ar": "شاي مقاصف", "p": 2, "c": "Hot Drink"}, {"id": "064466", "en": "COFFEE FOR CANTEENS", "ar": "قهوة مقاصف", "p": 3, "c": "Hot Drink"}, {"id": "013418", "en": "SUN TOP GRAPE ORANG PEACH 180ML", "ar": "نكتار سن توب بتقال &خوخ 180مل", "p": 2, "c": "Juice"}, {"id": "013417", "en": "SUN TOP GRAPE APPLE NECTR 180ML", "ar": "نكتار سن توب عنب وتفاح 180مل", "p": 2, "c": "Juice"}, {"id": "013420", "en": "SUN TOP MANGO&GRAPE NCTAR 180ML", "ar": "نكتار سن توب عنب ومانجو 180مل", "p": 2, "c": "Juice"}, {"id": "051232", "en": "KAKO APPLE PIE 70G", "ar": "فطيرة كاكو بالتفاح 70ج", "p": 2, "c": "Pie"}, {"id": "051236", "en": "KAKO ZATAR PIE 70G", "ar": "فطيرة كاكو زعتر 70ج", "p": 2, "c": "Pie"}, {"id": "051233", "en": "KAKO CHEESE PIE 70G", "ar": "فطيرة كاكو بالجبن 70ج", "p": 2, "c": "Pie"}, {"id": "037069", "en": "HALEY WAFER CREAM HAZNUT 30G", "ar": "ويفر هالي بندق", "p": 1, "c": "Biscuit"}, {"id": "064851", "en": "RUSKY BAKES CHEESE OREGANO AND BASIL 23G", "ar": "شرائح خبز راسكي بيكس جبن توابل 23 جرام", "p": 2, "c": "Rusk"}, {"id": "003886", "en": "HALEY DATE MAAMOUL 21G", "ar": "معمول هالي بالتمر 21ج", "p": 1, "c": "Rusk"}, {"id": "001448", "en": "HANA WATER 330ML", "ar": "مياه هنا 330مل", "p": 1, "c": "Water"}, {"id": "016380", "en": "HALEY WATER SODIUM FREE 330ML", "ar": "مياه هالي خالي من صوديوم 330مل", "p": 1, "c": "Water"}, {"id": "071095", "en": "ZOD HUMMOS 150G", "ar": "زود - صحن حمص 150 غرام", "p": 5, "c": "Fresh"}, {"id": "071091", "en": "ZOD VINE LEAVES 3PCS 60G", "ar": "زود - ورق عنب 3 حبة 60 جرام", "p": 3, "c": "Fresh"}, {"id": "071243", "en": "ZOD CORN FLAKES CUP 24G", "ar": "زود - كأس كورن فليكس 24 جرام", "p": 3, "c": "Corn Flex"}, {"id": "001273", "en": "KOCKE NOUGAT WAFER SQUARE 38G", "ar": "ويفر كوكي مينو مربع نوجا 38ج", "p": 2, "c": "Biscuit"}, {"id": "000340", "en": "DEEMAH DATE BARS 25G", "ar": "بسكويت ديمة بالتمر 25ج", "p": 1, "c": "Biscuit"}, {"id": "072019", "en": "MY MIX MOCHA ICE COFFEE 180ML", "ar": "ايس كوفي ماي ميكس موكا 180 مل", "p": 3, "c": "Cold Drink"}, {"id": "072020", "en": "MY MIX ORIGINAL ICE COFFEE 180ML", "ar": "ايس كوفي ماي ميكس اورجينال180 مل", "p": 3, "c": "Cold Drink"}, {"id": "072021", "en": "MY MIX CARAMEL ICE COFFEE 180ML", "ar": "ايس كوفي ماي ميكس كراميل 180 مل", "p": 3, "c": "Cold Drink"}, {"id": "004626", "en": "RINGO WAFER ROLL CHOC HAZE 16G", "ar": "ويفر رينجو شوكولاتة&بندق رول16ج", "p": 2, "c": "Biscuit"}, {"id": "071554", "en": "LULZ POPCORN SALT 25G", "ar": "فشار لولز بالملح 25ج", "p": 1, "c": "Popcorn"}, {"id": "053490", "en": "KAKO CHEESE & ZATAR PIE 70G", "ar": "فطيرة كاكو بالجبنة والزعتر 70ج", "p": 2, "c": "Pie"}, {"id": "007149", "en": "HALA DIGESTIVE BISCUIT 30G", "ar": "بسكويت هلا نخالة 30ج", "p": 1, "c": "Biscuit"}, {"id": "002497", "en": "HALEY TEA BISCUITS 75G", "ar": "بسكويت شاي هالي 75ج", "p": 1, "c": "Biscuit"}, {"id": "019086", "en": "ALMARAI ICE TEA PEACH&HIBISCUS 240ML", "ar": "ايس تي المراعي خوخ&كركديه240م", "p": 2, "c": "Cold Drink"}, {"id": "019087", "en": "ALMARAI ICE TEA LEMON 240ML", "ar": "ايس تي المراعي نكهة ليمون240م", "p": 2, "c": "Cold Drink"}, {"id": "067390", "en": "SUNBITES BAKE R.CHEESE&HERBS 23G", "ar": "شرائح خبز صن بايتس جبن&اعشاب23ج", "p": 2, "c": "Rusk"}, {"id": "067394", "en": "SUNBITES BAKE R.OLIVE&OREGANO 23G", "ar": "شرائح خبز صن بايتس زيتون&زعتر23ج", "p": 2, "c": "Rusk"}, {"id": "072412", "en": "ZOD MINI SWEET CORN", "ar": "زود ذرة حلوة صغير", "p": 3, "c": "Fresh"}];
+/* ---------- schools: 2,000 synthetic (blueprint: replace with confirmed Tatweer list) ---------- */
+const DISTRICTS=["Al Nakheel","Al Olaya","Al Malaz","Al Rawdah","Al Naseem","Al Shifa","Al Aziziyah","Al Suwaidi","Al Yasmin","Al Wadi","Al Hamra","Al Rabwah","Al Salam","Al Faisaliah","Al Khaleej","Al Andalus","Al Muruj","Al Ghadir","Al Nafal","Al Waha","Ishbiliyah","Qurtubah","Al Yarmuk","Granada","Al Rimal"];
+const STAGES=["Primary","Intermediate","Secondary"];
+const SCHOOLS=[];
+for(let i=1;i<=2000;i++){
+  const code="RYD-"+String(i).padStart(4,"0");
+  const d=DISTRICTS[i%DISTRICTS.length], st=STAGES[i%3], g=(i%2)?"Boys":"Girls";
+  SCHOOLS.push({code, name:`${d} ${st} School (${g}) — ${code}`});
+}
+
+/* ---------- storage adapter ---------- */
+const HAS_WS = typeof window!=="undefined" && window.storage && typeof window.storage.set==="function";
+const mem = {};   // fallback
+const store = {
+  async set(k,v){ if(HAS_WS){ try{ return await window.storage.set(k, JSON.stringify(v), true);}catch(e){ console.error(e); mem[k]=v; } } else mem[k]=v; },
+  async get(k){ if(HAS_WS){ try{ const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null;}catch(e){ return mem[k]||null; } } return mem[k]||null; },
+  async list(prefix){ if(HAS_WS){ try{ const r=await window.storage.list(prefix,true); return (r&&r.keys)||[]; }catch(e){ return Object.keys(mem).filter(k=>k.startsWith(prefix)); } } return Object.keys(mem).filter(k=>k.startsWith(prefix)); }
+};
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const CATS=[...new Set(SKUS.map(s=>s.c))];
+
+/* ---------- state ---------- */
+let selSchool=null, activeCat="All";
+const rows={}; // itemId -> {o,r,s,d,c}
+
+/* ---------- school picker ---------- */
+const sInput=$("schoolInput"), sList=$("schoolList"), sPill=$("schoolPill");
+sInput.addEventListener("input",()=>{
+  const q=sInput.value.trim().toLowerCase();
+  if(q.length<2){sList.style.display="none";return;}
+  const hits=SCHOOLS.filter(s=>s.name.toLowerCase().includes(q)||s.code.toLowerCase().includes(q)).slice(0,12);
+  sList.innerHTML=hits.map(h=>`<div data-code="${h.code}">${h.name}</div>`).join("")||"<div>No match</div>";
+  sList.style.display="block";
+});
+sList.addEventListener("click",e=>{
+  const c=e.target.dataset.code; if(!c)return;
+  selSchool=SCHOOLS.find(s=>s.code===c);
+  sInput.value=""; sList.style.display="none";
+  sPill.innerHTML=`<span class="pill">🏫 ${selSchool.name}</span>`;
+  refreshFooter();
+});
+document.addEventListener("click",e=>{ if(!e.target.closest(".schoolpick")) sList.style.display="none"; });
+
+/* ---------- date default ---------- */
+$("dateInput").value=todayISO();
+$("scDate").value=todayISO();
+
+/* ---------- category chips ---------- */
+const chipsBox=$("catChips");
+["All",...CATS].forEach(c=>{
+  const b=document.createElement("button");
+  b.className="chip"+(c==="All"?" on":""); b.textContent=c;
+  b.onclick=()=>{activeCat=c;[...chipsBox.children].forEach(x=>x.classList.toggle("on",x===b));renderSheet();};
+  chipsBox.appendChild(b);
+});
+
+/* ---------- sheet ---------- */
+const sheet=$("sheet");
+function rowState(v){
+  const t=v.o||v.r||v.s||v.d||v.c;
+  if(!t) return "idle";
+  const calc=(v.o||0)+(v.r||0)-(v.s||0)-(v.d||0);
+  return calc===(v.c||0) ? "ok" : "bad";
+}
+function renderSheet(){
+  const q=$("skuSearch").value.trim().toLowerCase();
+  sheet.innerHTML="";
+  SKUS.filter(s=>(activeCat==="All"||s.c===activeCat)&&(!q||s.en.toLowerCase().includes(q)||s.ar.includes(q)||s.id.includes(q)))
+    .forEach(s=>{
+      const v=rows[s.id]||(rows[s.id]={o:0,r:0,s:0,d:0,c:0});
+      const st=rowState(v);
+      const el=document.createElement("div");
+      el.className="sku"+(st==="ok"?" balanced":st==="bad"?" variance":(v.o||v.r||v.s||v.d||v.c)?" touched":"");
+      el.innerHTML=`
+        <div class="skuhead">
+          <div><span class="en">${s.en}</span> <span class="meta">· ${s.id} · SAR ${s.p} · ${s.c}</span></div>
+          <div class="ar">${s.ar}</div>
+        </div>
+        <div class="grid5">
+          ${["o","Opening افتتاحي","r","Received مستلم","s","Sold مباع","d","Damaged تالف","c","Closing ختامي"].reduce((h,x,i,arr)=>{
+            if(i%2)return h;
+            const key=x, lab=arr[i+1];
+            return h+`<div class="cell"><div class="cl">${lab}</div>
+              <input type="number" min="0" inputmode="numeric" data-id="${s.id}" data-k="${key}" value="${v[key]||""}" placeholder="0"></div>`;
+          },"")}
+        </div>
+        <div class="proof ${st==="ok"?"ok":st==="bad"?"bad":"idle"}" id="pf-${s.id}">${proofText(v,st)}</div>`;
+      sheet.appendChild(el);
+    });
+}
+function proofText(v,st){
+  if(st==="idle") return "—";
+  const calc=(v.o||0)+(v.r||0)-(v.s||0)-(v.d||0);
+  const eq=`${v.o||0} + ${v.r||0} − ${v.s||0} − ${v.d||0} = ${calc}`;
+  return st==="ok" ? `✓ Balanced: ${eq}` : `⚠ Variance: expected ${calc}, counted ${v.c||0}`;
+}
+sheet.addEventListener("input",e=>{
+  const id=e.target.dataset.id,k=e.target.dataset.k; if(!id)return;
+  rows[id][k]=Math.max(0,parseInt(e.target.value||"0",10)||0);
+  const v=rows[id], st=rowState(v);
+  const card=e.target.closest(".sku");
+  card.className="sku"+(st==="ok"?" balanced":st==="bad"?" variance":(v.o||v.r||v.s||v.d||v.c)?" touched":"");
+  const pf=$("pf-"+id); pf.className="proof "+(st==="ok"?"ok":st==="bad"?"bad":"idle"); pf.textContent=proofText(v,st);
+  refreshFooter();
+});
+$("skuSearch").addEventListener("input",renderSheet);
+
+/* ---------- footer ---------- */
+function touchedRows(){ return Object.entries(rows).filter(([,v])=>v.o||v.r||v.s||v.d||v.c); }
+function refreshFooter(){
+  const t=touchedRows();
+  let sold=0, closing=0, val=0, varn=0;
+  t.forEach(([id,v])=>{
+    sold+=v.s||0; closing+=v.c||0;
+    const sku=SKUS.find(s=>s.id===id); val+=(v.s||0)*(sku?sku.p:0);
+    if(rowState(v)==="bad")varn++;
+  });
+  $("fItems").textContent=t.length; $("fSold").textContent=sold;
+  $("fClosing").textContent=closing; $("fValue").textContent=val; $("fVar").textContent=varn;
+  $("submitBtn").disabled=!(selSchool && t.length>0);
+}
+
+/* ---------- submit ---------- */
+$("submitBtn").addEventListener("click",async ()=>{
+  const date=$("dateInput").value||todayISO();
+  const t=touchedRows();
+  const payload={
+    school:selSchool.code, schoolName:selSchool.name, date,
+    vendor:$("vendorInput").value.trim()||null,
+    submittedAt:new Date().toISOString(),
+    lines:t.map(([id,v])=>{const s=SKUS.find(x=>x.id===id);return{id,en:s.en,p:s.p,c:s.c,o:v.o||0,r:v.r||0,s:v.s||0,d:v.d||0,cl:v.c||0,var:rowState(v)==="bad"?1:0};})
+  };
+  $("submitBtn").disabled=true; $("submitBtn").textContent="Saving…";
+  await store.set(`sub:${date}:${selSchool.code}`, payload);
+  $("entryWrap").style.display="none"; $("fbar").style.display="none";
+  $("confirmBox").style.display="block";
+  $("confMeta").textContent=`${payload.schoolName} · ${date} · ${payload.lines.length} items`;
+  $("confRef").textContent=`Reference: ${date.replaceAll("-","")}-${selSchool.code}`;
+});
+$("newEntry").addEventListener("click",()=>{
+  Object.keys(rows).forEach(k=>delete rows[k]);
+  $("confirmBox").style.display="none"; $("entryWrap").style.display="block"; $("fbar").style.display="flex";
+  $("submitBtn").textContent="Submit day · إرسال"; renderSheet(); refreshFooter();
+});
+
+/* ---------- tabs ---------- */
+$("tabSchool").onclick=()=>{setTab(true)};
+$("tabSC").onclick=()=>{setTab(false)};
+function setTab(school){
+  $("tabSchool").classList.toggle("on",school); $("tabSC").classList.toggle("on",!school);
+  $("schoolShell").style.display=school?"block":"none";
+  $("scShell").style.display=school?"none":"block";
+  $("fbar").style.display=school && $("confirmBox").style.display!=="block" ?"flex":"none";
+}
+
+/* ---------- supply chain ---------- */
+$("scEnter").onclick=()=>{
+  if($("scPass").value==="SC2026"){ $("scGate").style.display="none"; $("scMain").style.display="block"; scLoad(); }
+  else alert("Wrong passcode");
+};
+$("scRefresh").onclick=()=>scLoad();
+$("scDate").addEventListener("change",()=>scLoad());
+
+async function scLoad(){
+  const date=$("scDate").value||todayISO();
+  if(!HAS_WS){ const n=$("storageNote"); n.style.display="block";
+    n.textContent="Demo mode: shared storage is unavailable in this environment, so only submissions made in this browser session are shown. In the deployed version, all 2,000 schools' submissions appear here.";
+  }
+  const keys=await store.list(`sub:${date}:`);
+  const subs=[]; for(const k of keys){ const v=await store.get(k); if(v)subs.push(v); }
+  subs.sort((a,b)=>a.school.localeCompare(b.school));
+  let sold=0,closing=0,val=0,varn=0;
+  subs.forEach(s=>s.lines.forEach(l=>{sold+=l.s;closing+=l.cl;val+=l.s*l.p;varn+=l.var;}));
+  $("kSchools").textContent=subs.length; $("kSold").textContent=sold;
+  $("kClosing").textContent=closing; $("kValue").textContent=val; $("kVar").textContent=varn;
+  const tb=$("scBody"); tb.innerHTML="";
+  $("scEmpty").style.display=subs.length?"none":"block";
+  $("scTable").style.display=subs.length?"table":"none";
+  subs.forEach((s,i)=>{
+    const vn=s.lines.reduce((a,l)=>a+l.var,0);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${s.school}</b><br><span style="color:var(--mut);font-size:11px">${s.schoolName}</span></td>
+      <td>${new Date(s.submittedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</td>
+      <td>${s.lines.length}</td><td>${s.lines.reduce((a,l)=>a+l.s,0)}</td>
+      <td>${s.lines.reduce((a,l)=>a+l.cl,0)}</td><td>${s.lines.reduce((a,l)=>a+l.s*l.p,0)}</td>
+      <td>${vn? `<span class="vbadge">${vn} variance</span>` : `<span class="okbadge">balanced</span>`}</td>
+      <td><button class="btn ghost2" style="padding:6px 12px;font-size:12px" data-i="${i}">Detail</button></td>`;
+    tb.appendChild(tr);
+    const det=document.createElement("tr"); det.className="det"; det.style.display="none";
+    det.innerHTML=`<td colspan="8">${s.lines.map(l=>`${l.id} ${l.en}: open ${l.o}, rcvd ${l.r}, sold ${l.s}, dmg ${l.d}, close ${l.cl}${l.var?" ⚠":""}`).join("<br>")}</td>`;
+    tb.appendChild(det);
+    tr.querySelector("button").onclick=()=>{det.style.display=det.style.display==="none"?"table-row":"none";};
+  });
+  window.__subs=subs;
+}
+
+/* ---------- CSV export ---------- */
+function toCSV(subs){
+  const head="date,school_code,school_name,vendor,item_id,item_name,category,unit_price,opening,received,sold,damaged,closing,variance_flag,submitted_at";
+  const lines=[head];
+  subs.forEach(s=>s.lines.forEach(l=>{
+    lines.push([s.date,s.school,`"${s.schoolName}"`,`"${s.vendor||""}"`,l.id,`"${l.en}"`,l.c,l.p,l.o,l.r,l.s,l.d,l.cl,l.var,s.submittedAt].join(","));
+  }));
+  return lines.join("\n");
+}
+function download(name,text){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([text],{type:"text/csv"})); a.download=name; a.click();
+}
+$("scExport").onclick=()=>{
+  const date=$("scDate").value||todayISO();
+  download(`canteen_stock_${date}.csv`, toCSV(window.__subs||[]));
+};
+$("scExportAll").onclick=async ()=>{
+  const keys=await store.list("sub:");
+  const subs=[]; for(const k of keys){const v=await store.get(k); if(v)subs.push(v);}
+  download(`canteen_stock_ALL.csv`, toCSV(subs));
+};
+
+/* ---------- init ---------- */
+renderSheet(); refreshFooter();
+</script>
+</body>
+</html>
